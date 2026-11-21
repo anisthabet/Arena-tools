@@ -131,5 +131,233 @@ function makeVideo(){var v=vals(),vert=v.orient.indexOf('Vertical')==0,Wv=vert?1
 sel.onchange=build;mb.onclick=function(){D[sel.value].video?makeVideo():makeImage()};build();
 if("serviceWorker" in navigator)window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});
 </script>
+ 
+<!-- ARENA PULSE LIVE SCORE -->
+<section id="ap-live">
+<style>
+#ap-live{font-family:Arial,sans-serif;color:#fff;background:#101116;padding:16px;border:1px solid #333;border-radius:14px;margin-top:25px}
+#ap-live *{box-sizing:border-box}
+#ap-live h2{margin:0 0 8px;color:#fff}
+#ap-live .ap-muted{color:#aaa;font-size:12px;margin-bottom:15px}
+#ap-live input,#ap-live select,#ap-live textarea{width:100%;padding:11px;margin:5px 0 12px;background:#24252b;color:white;border:1px solid #444;border-radius:7px;font-size:15px}
+#ap-live label{font-size:12px;color:#bbb;display:block}
+#ap-live button{background:#e53935;color:white;border:0;border-radius:7px;padding:12px;font-weight:bold;cursor:pointer;margin:4px 2px}
+#ap-live .ap-secondary{background:#333}
+#ap-live .ap-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#ap-live .ap-screen{width:100%;aspect-ratio:16/9;background:radial-gradient(ellipse at center,#263344,#080a0e 75%);border:1px solid #555;border-radius:10px;padding:4%;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
+#ap-live .ap-top,#ap-live .ap-bottom{display:flex;justify-content:space-between;align-items:center;gap:8px}
+#ap-live .ap-logo{font-weight:900;letter-spacing:2px;font-size:clamp(12px,2.5vw,26px)}
+#ap-live .ap-red{color:#e53935}
+#ap-live .ap-live-tag{background:#e53935;padding:5px 10px;font-weight:bold;font-size:clamp(9px,1.5vw,15px)}
+#ap-live .ap-league{text-align:center;color:#ccc;font-size:clamp(9px,1.5vw,17px)}
+#ap-live .ap-teams{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;text-align:center;gap:5px}
+#ap-live .ap-team{font-weight:bold;font-size:clamp(11px,2.4vw,25px);overflow-wrap:anywhere}
+#ap-live .ap-score{font-weight:900;font-size:clamp(35px,8vw,85px);white-space:nowrap}
+#ap-live .ap-minute{color:#ff5555;font-size:clamp(10px,1.5vw,17px);font-weight:bold}
+#ap-live .ap-bottom{border-top:1px solid #ffffff44;padding-top:9px;font-size:clamp(8px,1.3vw,14px)}
+#ap-live .ap-scorers{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#ap-live .ap-ticker{background:#e53935;padding:9px;overflow:hidden;white-space:nowrap;font-weight:bold;margin-top:8px}
+#ap-live .ap-ticker span{display:inline-block;animation:ap-scroll 18s linear infinite}
+@keyframes ap-scroll{from{transform:translateX(100%)}to{transform:translateX(-100%)}}
+#ap-live.ap-output{position:fixed;inset:0;z-index:999999;background:#050608;padding:0;margin:0;border:0;border-radius:0;display:flex;flex-direction:column;justify-content:center}
+#ap-live.ap-output .ap-controls,#ap-live.ap-output .ap-heading{display:none}
+#ap-live.ap-output .ap-screen{width:100%;height:auto;max-height:100vh;aspect-ratio:16/9;border:0;border-radius:0;padding:5%}
+#ap-live.ap-output .ap-ticker{margin:0}
+#ap-live .ap-actions{display:flex;flex-wrap:wrap;gap:5px}
+#ap-live .ap-actions button{flex:1}
+</style>
+
+<div class="ap-heading">
+<h2>🔴 ARENA PULSE LIVE</h2>
+<p class="ap-muted">LIVE SCORE CONTROL — FOOTBALL BROADCAST</p>
+</div>
+
+<div class="ap-controls">
+<h3>Match information</h3>
+
+<div class="ap-grid">
+<div>
+<label>HOME TEAM</label>
+<input id="ap-home" value="MANCHESTER CITY">
+</div>
+<div>
+<label>AWAY TEAM</label>
+<input id="ap-away" value="FULHAM">
+</div>
+</div>
+
+<label>COMPETITION</label>
+<input id="ap-league" value="PREMIER LEAGUE">
+
+<div class="ap-grid">
+<div>
+<label>HOME SCORE</label>
+<input id="ap-hs" type="number" min="0" value="0">
+</div>
+<div>
+<label>AWAY SCORE</label>
+<input id="ap-as" type="number" min="0" value="0">
+</div>
+</div>
+
+<div class="ap-actions">
+<button type="button" onclick="AP.changeScore('hs',1)">HOME +1</button>
+<button type="button" onclick="AP.changeScore('as',1)">AWAY +1</button>
+<button type="button" class="ap-secondary" onclick="AP.changeScore('hs',-1)">HOME -1</button>
+<button type="button" class="ap-secondary" onclick="AP.changeScore('as',-1)">AWAY -1</button>
+</div>
+
+<div class="ap-grid">
+<div>
+<label>MATCH MINUTE</label>
+<input id="ap-minute" value="16'">
+</div>
+<div>
+<label>MATCH STATUS</label>
+<select id="ap-status">
+<option>LIVE</option>
+<option>HALF TIME</option>
+<option>FULL TIME</option>
+<option>UPCOMING</option>
+<option>POSTPONED</option>
+</select>
+</div>
+</div>
+
+<label>GOAL SCORERS / MATCH EVENTS</label>
+<textarea id="ap-events" rows="3" placeholder="16' Muniz — Fulham"></textarea>
+
+<label>NEWS TICKER</label>
+<textarea id="ap-ticker-text" rows="2">ARENA PULSE | LIVE FOOTBALL SCORES | FOLLOW US FOR THE LATEST NEWS</textarea>
+
+<div class="ap-actions">
+<button type="button" onclick="AP.update()">UPDATE SCOREBOARD</button>
+<button type="button" class="ap-secondary" onclick="AP.reset()">RESET MATCH</button>
+</div>
+
+<p class="ap-muted">All changes update the scoreboard preview immediately.</p>
+</div>
+
+<div class="ap-heading">
+<h3>LIVE SCREEN PREVIEW — 16:9</h3>
+</div>
+
+<div class="ap-screen" id="ap-screen">
+<div class="ap-top">
+<div class="ap-logo"><span class="ap-red">ARENA</span> PULSE</div>
+<div class="ap-live-tag" id="ap-view-status">LIVE</div>
+</div>
+
+<div class="ap-league" id="ap-view-league">PREMIER LEAGUE</div>
+
+<div class="ap-teams">
+<div class="ap-team" id="ap-view-home">MANCHESTER CITY</div>
+<div>
+<div class="ap-score">
+<span id="ap-view-hs">0</span> : <span id="ap-view-as">0</span>
+</div>
+<div class="ap-minute" id="ap-view-minute">16'</div>
+</div>
+<div class="ap-team" id="ap-view-away">FULHAM</div>
+</div>
+
+<div class="ap-bottom">
+<div class="ap-scorers" id="ap-view-events"></div>
+<strong>ARENA PULSE</strong>
+</div>
+</div>
+
+<div class="ap-ticker">
+<span id="ap-view-ticker">ARENA PULSE | LIVE FOOTBALL SCORES</span>
+</div>
+
+<div class="ap-actions ap-controls">
+<button type="button" onclick="AP.output()">OPEN FULL SCREEN</button>
+<button type="button" class="ap-secondary" onclick="AP.exit()">BACK TO CONTROL</button>
+</div>
+
+<p class="ap-muted ap-controls" id="ap-message">ARENA PULSE — Ready.</p>
+</section>
+
+<script>
+(function(){
+const root=document.getElementById('ap-live');
+if(!root || root.dataset.ready)return;
+root.dataset.ready='1';
+
+const $=id=>root.querySelector('#ap-'+id);
+
+const fields={
+home:'view-home',
+away:'view-away',
+league:'view-league',
+hs:'view-hs',
+as:'view-as',
+minute:'view-minute',
+status:'view-status',
+events:'view-events',
+'ticker-text':'view-ticker'
+};
+
+function update(){
+Object.entries(fields).forEach(([input,output])=>{
+$(output).textContent=$(input).value;
+});
+$('message').textContent='Scoreboard updated successfully.';
+}
+
+function changeScore(id,amount){
+const input=$(id);
+input.value=Math.max(0,(parseInt(input.value)||0)+amount);
+update();
+}
+
+function reset(){
+if(!confirm('Reset this match?'))return;
+$('home').value='HOME TEAM';
+$('away').value='AWAY TEAM';
+$('league').value='FOOTBALL';
+$('hs').value=0;
+$('as').value=0;
+$('minute').value='0\'';
+$('status').value='LIVE';
+$('events').value='';
+$('ticker-text').value='ARENA PULSE | LIVE FOOTBALL';
+update();
+}
+
+function output(){
+update();
+root.classList.add('ap-output');
+if(root.requestFullscreen){
+root.requestFullscreen().catch(()=>{
+$('message').textContent='Fullscreen unavailable. Use your browser fullscreen option.';
+});
+}
+}
+
+function exit(){
+root.classList.remove('ap-output');
+if(document.fullscreenElement){
+document.exitFullscreen().catch(()=>{});
+}
+}
+
+root.querySelectorAll('input,select,textarea').forEach(el=>{
+el.addEventListener('input',update);
+el.addEventListener('change',update);
+});
+
+document.addEventListener('fullscreenchange',()=>{
+if(!document.fullscreenElement)root.classList.remove('ap-output');
+});
+
+window.AP={update,changeScore,reset,output,exit};
+update();
+})();
+</script>
+</section>
+<!-- END ARENA PULSE LIVE SCORE -->
+
 </body>
 </html>
